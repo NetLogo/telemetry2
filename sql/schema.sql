@@ -1,0 +1,81 @@
+CREATE DATABASE nl_telemetry2_dev;
+\c nl_telemetry2_dev;
+
+CREATE TABLE events (
+    event_id BIGSERIAL PRIMARY KEY,
+    user_uuid UUID NOT NULL,
+    event_type TEXT NOT NULL,
+    received_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+---------------------------------------------------
+-- STRUCTURED PAYLOAD EVENTS
+---------------------------------------------------
+
+CREATE TABLE app_exit_payload (
+    event_id BIGINT PRIMARY KEY REFERENCES events(event_id) ON DELETE CASCADE,
+    app_minutes DOUBLE PRECISION
+);
+
+CREATE TABLE app_start_payload (
+    event_id BIGINT PRIMARY KEY REFERENCES events(event_id) ON DELETE CASCADE,
+    version TEXT,
+    is_3d BOOLEAN,
+    os TEXT,
+    arch TEXT
+);
+
+CREATE TABLE behaviorspace_run_payload (
+    event_id BIGINT PRIMARY KEY REFERENCES events(event_id) ON DELETE CASCADE,
+    used_table BOOLEAN,
+    used_spreadsheet BOOLEAN,
+    used_stats BOOLEAN,
+    used_lists BOOLEAN
+);
+
+CREATE TABLE include_extension (
+    event_id BIGINT PRIMARY KEY REFERENCES events(event_id) ON DELETE CASCADE,
+    name TEXT NOT NULL
+);
+
+CREATE TABLE load_old_size_widgets (
+    event_id BIGINT PRIMARY KEY REFERENCES events(event_id) ON DELETE CASCADE,
+    num_widgets INT NOT NULL
+);
+
+CREATE TABLE model_code_hash (
+    event_id BIGINT PRIMARY KEY REFERENCES events(event_id) ON DELETE CASCADE,
+    hash INT NOT NULL
+);
+
+CREATE TABLE preference_change_payload (
+    event_id BIGINT PRIMARY KEY REFERENCES events(event_id) ON DELETE CASCADE,
+    name TEXT,
+    value TEXT
+);
+
+---------------------------------------------------
+-- JSONB PAYLOAD EVENTS
+---------------------------------------------------
+
+CREATE TABLE keyword_usage_payload (
+    event_id BIGINT PRIMARY KEY REFERENCES events(event_id) ON DELETE CASCADE,
+    payload JSONB NOT NULL
+);
+
+CREATE TABLE primitive_usage_payload (
+    event_id BIGINT PRIMARY KEY REFERENCES events(event_id) ON DELETE CASCADE,
+    payload JSONB NOT NULL
+);
+
+---------------------------------------------------
+-- Optional JSONB index for faster searching
+---------------------------------------------------
+
+CREATE INDEX keyword_usage_payload_gin
+  ON keyword_usage_payload USING GIN (payload);
+
+CREATE INDEX primitive_usage_payload_gin
+  ON primitive_usage_payload USING GIN (payload);
+
+CREATE DATABASE nl_telemetry2_prod WITH TEMPLATE nl_telemetry2_dev;
