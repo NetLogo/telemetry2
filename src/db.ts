@@ -79,7 +79,7 @@ async function writePayload( pool: Pool, eventID: number, typ: string
 
     case "Include Extension":
       await pool.query(
-        "INSERT INTO include_extension(event_id, name) VALUES ($1, $2)",
+        "INSERT INTO include_extension_payload(event_id, name) VALUES ($1, $2)",
         [ eventID
         , payload["name"] as string
         ]
@@ -96,7 +96,7 @@ async function writePayload( pool: Pool, eventID: number, typ: string
 
     case "Load Old Size Widgets":
       await pool.query(
-        "INSERT INTO load_old_size_widgets(event_id, num_widgets) VALUES ($1, $2)",
+        "INSERT INTO load_old_size_widgets_payload(event_id, num_widgets) VALUES ($1, $2)",
         [ eventID
         , payload["numWidgets"] as number
         ]
@@ -105,7 +105,7 @@ async function writePayload( pool: Pool, eventID: number, typ: string
 
     case "Model Code Hash":
       await pool.query(
-        "INSERT INTO model_code_hash(event_id, hash) VALUES ($1, $2)",
+        "INSERT INTO model_code_hash_payload(event_id, hash) VALUES ($1, $2)",
         [ eventID
         , payload["hash"] as number
         ]

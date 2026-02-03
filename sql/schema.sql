@@ -33,17 +33,17 @@ CREATE TABLE behaviorspace_run_payload (
     used_lists BOOLEAN NOT NULL
 );
 
-CREATE TABLE include_extension (
+CREATE TABLE include_extension_payload (
     event_id BIGINT PRIMARY KEY REFERENCES events(event_id) ON DELETE CASCADE,
     name TEXT NOT NULL
 );
 
-CREATE TABLE load_old_size_widgets (
+CREATE TABLE load_old_size_widgets_payload (
     event_id BIGINT PRIMARY KEY REFERENCES events(event_id) ON DELETE CASCADE,
     num_widgets INT NOT NULL
 );
 
-CREATE TABLE model_code_hash (
+CREATE TABLE model_code_hash_payload (
     event_id BIGINT PRIMARY KEY REFERENCES events(event_id) ON DELETE CASCADE,
     hash INT NOT NULL
 );
