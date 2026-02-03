@@ -6,7 +6,7 @@ Our server for receiving telemetry data from the NetLogo desktop application.  T
 
 This is intended as a stopgap, after abandoning Matomo.  We're likely to replace it with something else later.
 
-This system was originally designed to expects the data over HTTP/2, but ultimately shifted to focus on HTTP/1.1.
+This system was originally designed to expect the data over HTTP/2, but ultimately shifted to focus on HTTP/1.1.
 
 ## Setting up
 
