@@ -39,6 +39,9 @@ And then change `CERT_PATH` and `KEY_PATH` in `./.env` to point to your certific
     * This will serve as the underlying database for storing the uploaded data
     * Version 16.10 is confirmed to work, but in @TheBizzle's experience, Postgres is pretty flexible on version number.
   * Run `psql -f ./sql/schema.sql`
+    * Alternative forms, depending on your configuration:
+      * `psql -f ./sql/schema.sql -U postgres`
+      * `sudo -u postgres psql -f ./sql/schema.sql`
     * Initializes the database schema
 
 ### NodeJS
