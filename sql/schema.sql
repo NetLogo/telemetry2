@@ -14,23 +14,23 @@ CREATE TABLE events (
 
 CREATE TABLE app_exit_payload (
     event_id BIGINT PRIMARY KEY REFERENCES events(event_id) ON DELETE CASCADE,
-    app_minutes DOUBLE PRECISION
+    app_minutes DOUBLE PRECISION NOT NULL
 );
 
 CREATE TABLE app_start_payload (
     event_id BIGINT PRIMARY KEY REFERENCES events(event_id) ON DELETE CASCADE,
-    version TEXT,
-    is_3d BOOLEAN,
-    os TEXT,
-    arch TEXT
+    version TEXT NOT NULL,
+    is_3d BOOLEAN NOT NULL,
+    os TEXT NOT NULL,
+    arch TEXT NOT NULL
 );
 
 CREATE TABLE behaviorspace_run_payload (
     event_id BIGINT PRIMARY KEY REFERENCES events(event_id) ON DELETE CASCADE,
-    used_table BOOLEAN,
-    used_spreadsheet BOOLEAN,
-    used_stats BOOLEAN,
-    used_lists BOOLEAN
+    used_table BOOLEAN NOT NULL,
+    used_spreadsheet BOOLEAN NOT NULL,
+    used_stats BOOLEAN NOT NULL,
+    used_lists BOOLEAN NOT NULL
 );
 
 CREATE TABLE include_extension (
@@ -50,7 +50,7 @@ CREATE TABLE model_code_hash (
 
 CREATE TABLE preference_change_payload (
     event_id BIGINT PRIMARY KEY REFERENCES events(event_id) ON DELETE CASCADE,
-    name TEXT,
+    name TEXT NOT NULL,
     value TEXT
 );
 
