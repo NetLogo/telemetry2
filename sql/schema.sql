@@ -9,7 +9,7 @@ CREATE TABLE events (
 );
 
 ---------------------------------------------------
--- STRUCTURED PAYLOAD EVENTS
+-- Structured payload events
 ---------------------------------------------------
 
 CREATE TABLE app_exit_payload (
@@ -55,7 +55,7 @@ CREATE TABLE preference_change_payload (
 );
 
 ---------------------------------------------------
--- JSONB PAYLOAD EVENTS
+-- JSONB payload events
 ---------------------------------------------------
 
 CREATE TABLE keyword_usage_payload (
@@ -77,5 +77,9 @@ CREATE INDEX keyword_usage_payload_gin
 
 CREATE INDEX primitive_usage_payload_gin
   ON primitive_usage_payload USING GIN (payload);
+
+---------------------------------------------------
+-- Duplicate _dev to _prod
+---------------------------------------------------
 
 CREATE DATABASE nl_telemetry2_prod WITH TEMPLATE nl_telemetry2_dev;
