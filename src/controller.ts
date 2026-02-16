@@ -1,5 +1,4 @@
 import dotenv   from "dotenv";
-import fs       from "node:fs";
 import http     from "http";
 import http2    from "http2";
 import protobuf from "protobufjs";
@@ -17,9 +16,7 @@ dotenv.config();
 type NodeRequest  = http.IncomingMessage | http2.Http2ServerRequest
 type NodeResponse = http.ServerResponse  | http2.Http2ServerResponse
 
-const port:     number = parseInt(process.env[     "PORT"] ??     "3030");
-const certPath: string =          process.env["CERT_PATH"] ?? "cert.pem";
-const keyPath:  string =          process.env[ "KEY_PATH"] ??  "key.pem";
+const port:number = parseInt(process.env["PORT"] ?? "3030");
 
 const pbRoot           = await protobuf.load("src/proto/telemetry.proto");
 const TelemetryEventV1 = pbRoot.lookupType("TelemetryEventV1");
@@ -29,8 +26,6 @@ const server = http.createServer(http1Handler);
 const server2 =
   http2.createSecureServer({
     allowHTTP1: true
-  ,       cert: fs.readFileSync(certPath)
-  ,        key: fs.readFileSync( keyPath)
   });
 
 server2.on("request", http1Handler);
