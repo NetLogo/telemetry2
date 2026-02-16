@@ -16,10 +16,10 @@ const getOrError = (key: string, descriptor: string): string => {
   }
 };
 
-const pgUsername: string = getOrError("PG_USERNAME" ,  "username");
-const pgPassword: string = getOrError("PG_PASSWORD" ,  "password");
-const pgHostName: string = getOrError("PG_HOST_NAME", "localhost");
-const pgDBName:   string = getOrError("PG_DB_NAME"  ,   "DB name");
+const pgUsername: string = getOrError("POSTGRES_USERNAME",  "username");
+const pgPassword: string = getOrError("POSTGRES_PASSWORD",  "password");
+const pgHostName: string = getOrError("PG_HOST_NAME"     , "localhost");
+const pgDBName:   string = getOrError("PG_DB_NAME"       ,   "DB name");
 
 const poolFor = (suffix: string): Pool => {
   return new Pool({

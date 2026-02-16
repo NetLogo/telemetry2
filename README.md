@@ -61,8 +61,8 @@ And then change `CERT_PATH` and `KEY_PATH` in `./.env` to point to your certific
 
 ```
 PORT=<the port number that you want to run on; defaults to `3030`>
-PG_USERNAME=<your Postgres username>
-PG_PASSWORD=<your Postgres password>
+POSTGRES_USERNAME=<your Postgres username>
+POSTGRES_PASSWORD=<your Postgres password>
 PG_HOST_NAME=<the domain name where your Postgres instance can be found; defaults to `localhost`>
 PG_DB_NAME=nl_telemetry2
 CERT_PATH=<path to your SSL cert; defaults to `cert.pem`>
