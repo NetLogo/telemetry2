@@ -1,5 +1,6 @@
 import dotenv   from "dotenv";
 import fs       from "node:fs";
+import http     from "http";
 import http2    from "http2";
 import protobuf from "protobufjs";
 
@@ -13,6 +14,9 @@ import type { NL70xEvent } from "./protobuf.js";
 
 dotenv.config();
 
+type NodeRequest  = http.IncomingMessage | http2.Http2ServerRequest
+type NodeResponse = http.ServerResponse  | http2.Http2ServerResponse
+
 const port:     number = parseInt(process.env[     "PORT"] ??     "3030");
 const certPath: string =          process.env["CERT_PATH"] ?? "cert.pem";
 const keyPath:  string =          process.env[ "KEY_PATH"] ??  "key.pem";
@@ -20,14 +24,18 @@ const keyPath:  string =          process.env[ "KEY_PATH"] ??  "key.pem";
 const pbRoot           = await protobuf.load("src/proto/telemetry.proto");
 const TelemetryEventV1 = pbRoot.lookupType("TelemetryEventV1");
 
-const server =
+const server = http.createServer(http1Handler);
+
+const server2 =
   http2.createSecureServer({
     allowHTTP1: true
   ,       cert: fs.readFileSync(certPath)
   ,        key: fs.readFileSync( keyPath)
   });
 
-server.on("request", (req, res) => {
+server2.on("request", http1Handler);
+
+function http1Handler(req: NodeRequest, res: NodeResponse): void {
   if (req.method === "POST" && req.url === "/telemetry/v2/upload") {
     void handleAnalyticsRequest(req, res);
   } else if (req.method === "GET" && req.url === "/telemetry/diagnostic") {
@@ -37,10 +45,10 @@ server.on("request", (req, res) => {
     res.writeHead(404);
     res.end();
   }
-});
+};
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
-server.on("stream", async (stream, headers) => {
+server2.on("stream", async (stream, headers) => {
   if (headers[":method"] === "POST" && headers[":path"] === "/telemetry/v2/upload") {
     void handleUpload(stream);
   } else {
@@ -74,8 +82,7 @@ async function handleUpload(stream: http2.ServerHttp2Stream): Promise<void> {
 
 };
 
-async function handleAnalyticsRequest( req: http2.Http2ServerRequest
-                                     , res: http2.Http2ServerResponse): Promise<void> {
+async function handleAnalyticsRequest(req: NodeRequest, res: NodeResponse): Promise<void> {
 
   const chunks: Array<Buffer> = [];
 
@@ -139,6 +146,8 @@ async function processAnalyticsMessage(chunk: Buffer | string): Promise<void> {
   }
 
 }
+
+void server2; // Disabled for now
 
 server.listen(port, () => {
   console.log(`Telemetry server listening on :${port}`);
