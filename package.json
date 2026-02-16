@@ -16,8 +16,8 @@
               }
 
 , "scripts": { "build": "npx tsc"
-             , "dev":   "npx node dist/src/controller.js"
              , "lint":  "npx tsc && npx eslint ."
+             , "run":   "npx node dist/src/controller.js"
              , "start": "npx tsc && npx node dist/src/controller.js"
              , "test":  "echo \"TODO: Testing\" && exit 1"
              }
