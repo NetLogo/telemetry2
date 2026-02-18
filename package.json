@@ -11,15 +11,16 @@
 , "private":     true
 , "type":        "module"
 
-, "engines" : { "npm":  "~11.6.0"
-              , "node": "~24.13.0"
+, "engines" : { "npm":  "~11.8.0"
+              , "node": "~24.13.1"
               }
 
-, "scripts": { "build": "npx tsc"
-             , "lint":  "npx tsc && npx eslint ."
-             , "run":   "npx node dist/src/controller.js"
-             , "start": "npx tsc && npx node dist/src/controller.js"
-             , "test":  "echo \"TODO: Testing\" && exit 1"
+, "scripts": { "build":   "npx tsc"
+             , "ci-lint": "npx eslint ."
+             , "lint":    "npx tsc && npx eslint ."
+             , "run":     "npx node dist/src/controller.js"
+             , "start":   "npx tsc && npx node dist/src/controller.js"
+             , "test":    "echo \"TODO: Testing\" && exit 1"
              }
 
 , "dependencies": { "dotenv":     "~16.4.0"
