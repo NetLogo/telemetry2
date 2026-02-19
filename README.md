@@ -61,15 +61,28 @@ docker build -t telemetry2:latest . && \
   docker compose up
 ```
 
-### Deploying
-
-#### One-time only: Setting up the schema
-
-You shouldn't need to this, since it's already been done, but, before the app be used on the server, the relevant database needs to get set up with the schema from `sql/schema.sql`.  @TheBizzle has scripts and YAML files laying around, showing how he did this, and can produce them upon request.
+### Deploying with Kubernetes
 
 #### Uploading to GitHub Container Registry (GHCR)
 
-To publish the Docker images for use on the cluster, navigate to [this GitHub Actions page](https://github.com/NetLogo/telemetry2/actions/workflows/publish-image.yaml) and click "Run workflow".  After choosing the branch/tag that you want to publish, confirming your selection, and waiting less than a minute, the image should become available [here](https://github.com/NetLogo/telemetry2/pkgs/container/telemetry2).
+To publish the Docker images from this repository for use on the cluster, navigate to [this GitHub Actions page](https://github.com/NetLogo/telemetry2/actions/workflows/publish-image.yaml) and click "Run workflow".  After choosing the branch/tag that you want to publish, confirming your selection, and waiting less than a minute, the image should become available [here](https://github.com/NetLogo/telemetry2/pkgs/container/telemetry2).
+
+#### One-time only: Configure variables and secrets
+
+You shouldn't need to do this, since it's already been done, but, before the app can be used on the server, a few "secret" values need to be defined in Kubernetes:
+
+* `pg-pretalx-credentials` (for root DB user)
+  * `PGUSER`
+  * `PGPASSWORD`
+* `telemetry2-db-credentials` (for the DB account that will be created for this app)
+  * `PGUSER`
+  * `PGPASSWORD`
+
+#### One-time only: Setting up the schema
+
+This is also already done on the real server, but note that setting up a fresh instance of this requires applying the schema from `sql/schema.sql`.
+
+The file for it is `kubernetes/00-initialize-db.yaml`.  Note that it assumes a Postgres DB name of `postgres-pretalx`.  It also assumes the presence of the secrets mentioned in the previous step.
 
 #### Launching the containers
 
