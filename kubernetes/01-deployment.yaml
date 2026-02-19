@@ -16,7 +16,7 @@ spec:
         - name: ghcr-pa-token
       containers:
         - name: app
-          image: ghcr.io/netlogo/telemetry2:4078af9
+          image: ghcr.io/netlogo/telemetry2:c180f0e
           ports:
             - containerPort: 3030
               protocol: TCP
