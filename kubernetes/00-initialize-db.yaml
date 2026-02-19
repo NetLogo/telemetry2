@@ -1,0 +1,65 @@
+apiVersion: batch/v1
+kind:       Job
+
+metadata:
+  name: telemetry2-db-init
+
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name:    db-init
+          image:   pgvector/pgvector:pg15-bookworm
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              PGPASSWORD="$PG_ROOT_PASSWORD" psql -h postgres-pretalx -U "$PG_ROOT_USER" -d postgres <<EOF
+              DO \$\$
+              BEGIN
+                IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '$APP_DB_USER') THEN
+                  CREATE ROLE $APP_DB_USER WITH LOGIN PASSWORD '$APP_DB_PASSWORD' CREATEDB NOSUPERUSER NOCREATEROLE;
+                END IF;
+              END
+              \$\$;
+              EOF
+
+              for f in /schema/*.sql; do
+                PGPASSWORD="$APP_DB_PASSWORD" psql -h postgres-pretalx -U "$APP_DB_USER" -d postgres -f "$f"
+              done
+
+          env:
+            - name: PG_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: pg-pretalx-credentials
+                  key:  PGUSER
+
+            - name: PG_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pg-pretalx-credentials
+                  key:  PGPASSWORD
+
+            - name: APP_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: telemetry2-db-credentials
+                  key:  PGUSER
+
+            - name: APP_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: telemetry2-db-credentials
+                  key:  PGPASSWORD
+
+          volumeMounts:
+            - name: schema
+              mountPath: /schema
+
+      volumes:
+        - name: schema
+          configMap:
+            name: telemetry2-schema
+
+  backoffLimit: 3
