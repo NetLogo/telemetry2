@@ -3,11 +3,10 @@ kind: Service
 metadata:
   name: app-service
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: app
   ports:
     - port: 80          # The port hooked up to the Ingress
       targetPort: 3030  # The port used by NodeJS inside the container
-      nodePort: 32101   # External port on the machine
       protocol: TCP
