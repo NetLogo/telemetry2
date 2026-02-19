@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    env_file:
+      - .prod_db_env
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d
+
+  app:
+    image: telemetry2:latest
+    ports:
+      - "3030:3030"
+    env_file:
+      - .prod_db_env
+      - .prod_env
+    depends_on:
+      - db
+
+volumes:
+  pgdata:

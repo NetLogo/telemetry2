@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      imagePullSecrets:
+        - name: ghcr-pa-token
+      containers:
+        - name: app
+          image: ghcr.io/netlogo/telemetry2:4078af9
+          ports:
+            - containerPort: 3030
+              protocol: TCP
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          env:
+            - name: PG_DB_NAME
+              value: "nl_telemetry2"
+
+            - name: PG_HOST_NAME
+              value: "postgres-pretalx.default.svc.cluster.local"
+
+            - name: PORT
+              value: "3030"
+
+            - name: POSTGRES_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: telemetry2-db-credentials
+                  key:  PGUSER
+
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: telemetry2-db-credentials
+                  key:  PGPASSWORD
+
+      restartPolicy: Always
