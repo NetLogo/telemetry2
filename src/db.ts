@@ -133,6 +133,15 @@ async function writePayload( pool: Pool, eventID: number, typ: string
       );
       break;
 
+    case "Announcement Clicked":
+      await pool.query(
+        `INSERT INTO announcement_clicked_payload (event_id, announcement_id)
+         VALUES ($1, $2)`,
+        [ eventID
+        , payload["announcementID"] as number
+        ]
+      );
+
     default:
       break;
 

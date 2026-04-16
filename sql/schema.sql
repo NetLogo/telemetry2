@@ -54,6 +54,11 @@ CREATE TABLE preference_change_payload (
     value TEXT
 );
 
+CREATE TABLE announcement_clicked_payload (
+    event_id BIGINT PRIMARY KEY REFERENCES events(event_id) ON DELETE CASCADE,
+    announcement_id INT NOT NULL
+);
+
 ---------------------------------------------------
 -- JSONB payload events
 ---------------------------------------------------

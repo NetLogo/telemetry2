@@ -27,9 +27,9 @@ const recombobulateUUID = (part1: Long, part2: Long): string => {
   return stringify(buffer);
 };
 
-// HEY!  Don't make modifications to this.  If you need to change the format, make a new one
-// and then add it to `AnalyticsEventType.scala` in NetLogo, and ONLY EVER ADD TO THE END.
-// --Jason B. (1/26/26)
+// HEY!  Default to not making modifications to this.  If you need to change the format of an existing
+// event, just make a new one and then add it to `AnalyticsEventType.scala` in NetLogo, and ONLY EVER ADD
+// TO THE END OF THIS LIST. --Jason B. (4/16/26)
 const eventTypes =
   [ "App Start"
   , "App Exit"
@@ -58,6 +58,7 @@ const eventTypes =
   , "Modeling Commons Upload"
   , "Save as NetLogo Web"
   , "Preview Commands Open"
+  , "Announcement Clicked"
   ];
 
 const lookupEventType = (index: number): string => {
