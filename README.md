@@ -67,6 +67,10 @@ docker build -t telemetry2:latest . && \
 
 To publish the Docker images from this repository for use on the cluster, navigate to [this GitHub Actions page](https://github.com/NetLogo/telemetry2/actions/workflows/publish-image.yaml) and click "Run workflow".  After choosing the branch/tag that you want to publish, confirming your selection, and waiting less than a minute, the image should become available [here](https://github.com/NetLogo/telemetry2/pkgs/container/telemetry2).
 
+Once you have the hash of the container, you can log into the Headlamp dashboard and go to "Maps".  Find the "telemetry2" section of the map, and select the **deployment** (not the pod).  Edit it, searching for all instances of the previous container's hash (there should be 2), and replacing those hashes with the new one on GHCR.  After you save, it will launch a new instance of the NodeJS application, and swap it in place of the old one.  There might be a lingering `ReplicaSet`, which you can manually delete.
+
+If you need to update the database schema, find the `postgres-pretalx` pod, switch to its interactive console, run `psql`, and make your SQL changes.  Be sure to apply them to both the `nl_telemetry2_dev` and `nl_telemetry2_prod` databases.  If you add new tables, be sure to give permissions to the `telemetry2` user, for example with: `GRANT INSERT ON TABLE my_new_table TO telemetry2;`.
+
 #### One-time only: Configure variables and secrets
 
 You shouldn't need to do this, since it's already been done, but, before the app can be used on the server, a few "secret" values need to be defined in Kubernetes:
