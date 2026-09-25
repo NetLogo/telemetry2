@@ -27,8 +27,8 @@ COPY package-lock.json ./
 
 RUN npm ci --omit=dev --omit=optional
 
-COPY --from=builder /app/dist/      ./dist/
-COPY --from=builder /app/src/proto/ ./src/proto/
+COPY --from=builder /app/dist/         ./dist/
+COPY --from=builder /app/src/protobuf/ ./src/protobuf/
 
 EXPOSE 3030
 

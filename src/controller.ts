@@ -3,13 +3,14 @@ import http     from "http";
 import http2    from "http2";
 import protobuf from "protobufjs";
 
-import { writeEvent } from "./db.js";
+import { writeEvent } from "./db/db.js";
 
-import { lookupEventType, recombobulateUUID } from "./protobuf.js";
+import { recombobulateUUID                    } from "./protobuf/common.js";
+import { lookupEventType as lookupNLEventType } from "./protobuf/nl_desktop.js";
 
 import type Long from "long";
 
-import type { NL70xEvent } from "./protobuf.js";
+import type { NL70xEvent } from "./protobuf/nl_desktop.js";
 
 dotenv.config();
 
@@ -18,8 +19,8 @@ type NodeResponse = http.ServerResponse  | http2.Http2ServerResponse
 
 const port:number = parseInt(process.env["PORT"] ?? "3030");
 
-const pbRoot           = await protobuf.load("src/proto/telemetry.proto");
-const TelemetryEventV1 = pbRoot.lookupType("TelemetryEventV1");
+const pbRoot           = await protobuf.load("src/protobuf/telemetry.proto");
+const TelemetryEventV1 = pbRoot.lookupType("NLD_TelemetryEventV1");
 
 const server = http.createServer(http1Handler);
 
@@ -32,7 +33,7 @@ server2.on("request", http1Handler);
 
 function http1Handler(req: NodeRequest, res: NodeResponse): void {
   if (req.method === "POST" && req.url === "/telemetry/v2/upload") {
-    void handleAnalyticsRequest(req, res);
+    void handleNLDAnalyticsRequest(req, res);
   } else if (req.method === "GET" && req.url === "/telemetry/diagnostic") {
     res.writeHead(200);
     res.end("Success");
@@ -45,21 +46,21 @@ function http1Handler(req: NodeRequest, res: NodeResponse): void {
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 server2.on("stream", async (stream, headers) => {
   if (headers[":method"] === "POST" && headers[":path"] === "/telemetry/v2/upload") {
-    void handleUpload(stream);
+    void handleNLDUpload(stream);
   } else {
     stream.respond({ ":status": 404 });
     stream.end();
   }
 });
 
-async function handleUpload(stream: http2.ServerHttp2Stream): Promise<void> {
+async function handleNLDUpload(stream: http2.ServerHttp2Stream): Promise<void> {
 
   let alreadyEnded = false;
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   stream.on("data", async (data) => {
     try {
-      await processAnalyticsMessage(data);
+      await processNLDAnalyticsMessage(data);
     } catch (err: unknown) {
       console.error(err);
       alreadyEnded = true;
@@ -77,7 +78,7 @@ async function handleUpload(stream: http2.ServerHttp2Stream): Promise<void> {
 
 };
 
-async function handleAnalyticsRequest(req: NodeRequest, res: NodeResponse): Promise<void> {
+async function handleNLDAnalyticsRequest(req: NodeRequest, res: NodeResponse): Promise<void> {
 
   const chunks: Array<Buffer> = [];
 
@@ -90,7 +91,7 @@ async function handleAnalyticsRequest(req: NodeRequest, res: NodeResponse): Prom
     try {
       const body = Buffer.concat(chunks);
       chunks.length = 0;
-      await processAnalyticsMessage(body);
+      await processNLDAnalyticsMessage(body);
       res.writeHead(200);
       res.end("OK");
     } catch (err: unknown) {
@@ -108,7 +109,7 @@ async function handleAnalyticsRequest(req: NodeRequest, res: NodeResponse): Prom
 
 }
 
-async function processAnalyticsMessage(chunk: Buffer | string): Promise<void> {
+async function processNLDAnalyticsMessage(chunk: Buffer | string): Promise<void> {
 
   const   buffer = (typeof(chunk) === "string") ? Buffer.from(chunk) : chunk;
   const  decoded = TelemetryEventV1.decode(buffer);
@@ -122,7 +123,7 @@ async function processAnalyticsMessage(chunk: Buffer | string): Promise<void> {
     // losing precision, we use the "long" library from NPM to read the 64-bit numbers
     // from ProtoBuf.  This happens automagically. --Jason B. (2/2/26)
     const userUUID  = recombobulateUUID(rawEvent["uuid1"] as Long, rawEvent["uuid2"] as Long);
-    const eventType = lookupEventType(rawEvent["eventType"] as number);
+    const eventType = lookupNLEventType(rawEvent["eventType"] as number);
 
     const event: NL70xEvent =
       { userUUID
