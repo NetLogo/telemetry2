@@ -1,9 +1,11 @@
 import dotenv   from "dotenv";
 import { Pool } from "pg";
 
-import { NL70xEvent } from "../protobuf/nl_desktop.js";
+import { NL70xEvent                       } from "../protobuf/nl_desktop.js";
+import { NLUpdaterEvent, SelfUpdaterEvent } from "../protobuf/updater.js";
 
-import { writePayload as writeNLDPayload } from "./nl_desktop.js";
+import { writePayload as     writeNLDPayload } from "./nl_desktop.js";
+import { writePayload as writeUpdaterPayload } from "./updater.js";
 
 import type { QueryResult } from "pg";
 import type { TelemetryEvent } from "../protobuf/common.js";
@@ -43,15 +45,18 @@ async function writeEvent(event: TelemetryEvent): Promise<void> {
 
     const pool = event.isDeveloper ? DEV_DB : PROD_DB;
 
-    const [dbName, writePayload] = (event instanceof NL70xEvent) ? ["events", writeNLDPayload] :
-                                                                   ["invalid_event_type", (): void => {}];
+    const [dbName, writePayload] =
+      (event instanceof       NL70xEvent) ? [                "events",            writeNLDPayload] :
+      (event instanceof   NLUpdaterEvent) ? ["updater_netlogo_events", writeUpdaterPayload(false)] :
+      (event instanceof SelfUpdaterEvent) ? [   "updater_self_events", writeUpdaterPayload( true)] :
+                                            [    "invalid_event_type",             (): void => {}];
 
     const result: QueryResult<{ event_id: number }> =
       await pool.query(
-        `INSERT INTO $1 (user_uuid, event_type)
-         VALUES ($2, $3)
+        `INSERT INTO "${dbName}" (user_uuid, event_type)
+         VALUES ($1, $2)
          RETURNING event_id`,
-        [dbName, event.userUUID, event.eventType]
+        [event.userUUID, event.eventType]
       );
 
     const eventID = result.rows[0]?.event_id;

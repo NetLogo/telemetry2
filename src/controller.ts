@@ -5,17 +5,24 @@ import protobuf from "protobufjs";
 
 import { writeEvent } from "./db/db.js";
 
-import { recombobulateUUID                    } from "./protobuf/common.js";
-import { lookupEventType as lookupNLEventType } from "./protobuf/nl_desktop.js";
+import { recombobulateUUID                                } from "./protobuf/common.js";
+import { lookupEventType as lookupNLEventType, NL70xEvent } from "./protobuf/nl_desktop.js";
+
+import { lookupNLUpdateEventType, lookupSelfUpdateEventType, NLUpdaterEvent, SelfUpdaterEvent
+       } from "./protobuf/updater.js";
 
 import type Long from "long";
-
-import type { NL70xEvent } from "./protobuf/nl_desktop.js";
 
 dotenv.config();
 
 type NodeRequest  = http.IncomingMessage | http2.Http2ServerRequest
 type NodeResponse = http.ServerResponse  | http2.Http2ServerResponse
+
+enum AnalyticsSource {
+  // eslint-disable-next-line @typescript-eslint/no-shadow
+  NetLogoDesktop, InstallerNetLogo, InstallerSelf
+}
+const { NetLogoDesktop, InstallerNetLogo, InstallerSelf } = AnalyticsSource;
 
 const port:number = parseInt(process.env["PORT"] ?? "3030");
 
@@ -33,7 +40,11 @@ server2.on("request", http1Handler);
 
 function http1Handler(req: NodeRequest, res: NodeResponse): void {
   if (req.method === "POST" && req.url === "/telemetry/v2/upload") {
-    void handleNLDAnalyticsRequest(req, res);
+    void handleAnalyticsRequest(req, res, NetLogoDesktop);
+  } else if (req.method === "POST" && req.url === "/telemetry/v2/installer/netlogo/upload") {
+    void handleAnalyticsRequest(req, res, InstallerNetLogo);
+  } else if (req.method === "POST" && req.url === "/telemetry/v2/installer/installer/upload") {
+    void handleAnalyticsRequest(req, res, InstallerSelf);
   } else if (req.method === "GET" && req.url === "/telemetry/diagnostic") {
     res.writeHead(200);
     res.end("Success");
@@ -78,7 +89,8 @@ async function handleNLDUpload(stream: http2.ServerHttp2Stream): Promise<void> {
 
 };
 
-async function handleNLDAnalyticsRequest(req: NodeRequest, res: NodeResponse): Promise<void> {
+async function handleAnalyticsRequest( req: NodeRequest, res: NodeResponse
+                                     , sourceApp: AnalyticsSource): Promise<void> {
 
   const chunks: Array<Buffer> = [];
 
@@ -89,11 +101,31 @@ async function handleNLDAnalyticsRequest(req: NodeRequest, res: NodeResponse): P
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   req.on("end", async () => {
     try {
+
       const body = Buffer.concat(chunks);
       chunks.length = 0;
-      await processNLDAnalyticsMessage(body);
+
+      switch (sourceApp) {
+        case NetLogoDesktop: {
+          await processNLDAnalyticsMessage(body);
+          break;
+        }
+        case InstallerNetLogo: {
+          await processInstallerAnalyticsMessage(body, false);
+          break;
+        }
+        case InstallerSelf: {
+          await processInstallerAnalyticsMessage(body, true);
+          break;
+        }
+        default: {
+          console.warn(`Impossible analytics source: ${sourceApp}`);
+        }
+      }
+
       res.writeHead(200);
       res.end("OK");
+
     } catch (err: unknown) {
       console.error(`HTTP/1.1 analytics completion error: ${err}`);
       res.writeHead(400);
@@ -125,13 +157,40 @@ async function processNLDAnalyticsMessage(chunk: Buffer | string): Promise<void>
     const userUUID  = recombobulateUUID(rawEvent["uuid1"] as Long, rawEvent["uuid2"] as Long);
     const eventType = lookupNLEventType(rawEvent["eventType"] as number);
 
-    const event: NL70xEvent =
-      { userUUID
-      , isDeveloper: rawEvent["isDeveloper"] as boolean
-      , eventType
-      , payload:     rawEvent[    "payload"] as string
-      };
+    const event = new NL70xEvent( userUUID, rawEvent["isDeveloper"] as boolean, eventType
+                                , rawEvent["payload"] as string);
 
+    await writeEvent(event);
+
+  } else {
+    const v      = rawEvent["formatVersion"];
+    const objStr = JSON.stringify(rawEvent);
+    console.error(`Unexpected protobuf event version: ${v} | ${objStr}`);
+    throw new Error("Bad protobuf message");
+  }
+
+}
+
+async function processInstallerAnalyticsMessage(chunk: Buffer | string, isSelf: boolean): Promise<void> {
+
+  const   buffer = (typeof(chunk) === "string") ? Buffer.from(chunk) : chunk;
+  const  decoded = TelemetryEventV1.decode(buffer);
+  const rawEvent = TelemetryEventV1.toObject(decoded, { defaults: true }) as Record<string, unknown>;
+
+  if ((rawEvent["formatVersion"] as number) === 1) {
+
+    // Note that JS can only represent integers accurately up to 53 bits.  NetLogo breaks
+    // the UUID up into two 64-bit numbers so it can be transmitted over the wire.  Then,
+    // we recombobulate it into a 128-bit UUID.  But, in order to get there without
+    // losing precision, we use the "long" library from NPM to read the 64-bit numbers
+    // from ProtoBuf.  This happens automagically. --Jason B. (2/2/26)
+    const userUUID    = recombobulateUUID(rawEvent["uuid1"] as Long, rawEvent["uuid2"] as Long);
+    const lookerUpper = isSelf ? lookupSelfUpdateEventType : lookupNLUpdateEventType;
+    const eventType   = lookerUpper(rawEvent["eventType"] as number);
+
+    const Clazz = isSelf ? SelfUpdaterEvent : NLUpdaterEvent;
+    const event = new Clazz( userUUID, rawEvent["isDeveloper"] as boolean, eventType
+                           , rawEvent["payload"] as string);
     await writeEvent(event);
 
   } else {

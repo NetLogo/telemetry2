@@ -84,6 +84,51 @@ CREATE INDEX primitive_usage_payload_gin
   ON primitive_usage_payload USING GIN (payload);
 
 ---------------------------------------------------
+-- Tables for the updater application
+---------------------------------------------------
+
+CREATE TABLE updater_netlogo_events (
+    event_id BIGSERIAL PRIMARY KEY,
+    user_uuid UUID NOT NULL,
+    event_type TEXT NOT NULL,
+    received_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE updater_netlogo_event_payloads (
+    event_id BIGINT PRIMARY KEY REFERENCES updater_netlogo_events(event_id) ON DELETE CASCADE,
+    version TEXT NOT NULL,
+    resolution TEXT NOT NULL,
+    checksum TEXT
+);
+
+CREATE TABLE updater_netlogo_launch_event_payloads (
+    event_id BIGINT PRIMARY KEY REFERENCES updater_netlogo_events(event_id) ON DELETE CASCADE,
+    app TEXT NOT NULL,
+    version TEXT NOT NULL,
+    resolution TEXT NOT NULL,
+    checksum TEXT
+);
+
+CREATE TABLE updater_self_events (
+    LIKE updater_netlogo_events INCLUDING ALL
+);
+
+CREATE TABLE updater_self_event_payloads (
+    event_id BIGINT PRIMARY KEY REFERENCES updater_self_events(event_id) ON DELETE CASCADE,
+    version TEXT NOT NULL,
+    resolution TEXT NOT NULL,
+    checksum TEXT
+);
+
+CREATE TABLE updater_self_launch_event_payloads (
+    event_id BIGINT PRIMARY KEY REFERENCES updater_self_events(event_id) ON DELETE CASCADE,
+    app TEXT NOT NULL,
+    version TEXT NOT NULL,
+    resolution TEXT NOT NULL,
+    checksum TEXT
+);
+
+---------------------------------------------------
 -- Duplicate _dev to _prod
 ---------------------------------------------------
 
