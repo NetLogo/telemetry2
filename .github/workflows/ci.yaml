@@ -18,10 +18,10 @@ jobs:
       - name: Setup NodeJS
         uses: actions/setup-node@v3
         with:
-          node-version: 24.13.1
+          node-version: 24.22.2
 
       - name: Setup npm
-        run: npm install -g npm@11.8.0
+        run: npm install -g npm@11.19.1
 
       - name: Fetch node_modules from cache
         uses: actions/cache@v3

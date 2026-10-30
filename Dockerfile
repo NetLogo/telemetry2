@@ -1,4 +1,4 @@
-FROM node:24-alpine AS builder
+FROM node:24.22.2-alpine AS builder
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ COPY . .
 RUN npm run build
 
 
-FROM node:24-alpine AS runner
+FROM node:24.22.2-alpine AS runner
 
 ARG GIT_COMMIT
 ENV APP_VERSION=$GIT_COMMIT
